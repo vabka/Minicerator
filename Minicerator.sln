@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minicerator", "Minicerator\Minicerator.csproj", "{FAAB45BC-C702-412E-B581-5E54577477A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minicerator.CLI", "Minicerator.CLI\Minicerator.CLI.csproj", "{26E81F77-0BAD-44D6-BB4C-3E5F226B9996}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FAAB45BC-C702-412E-B581-5E54577477A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAAB45BC-C702-412E-B581-5E54577477A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAAB45BC-C702-412E-B581-5E54577477A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAAB45BC-C702-412E-B581-5E54577477A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26E81F77-0BAD-44D6-BB4C-3E5F226B9996}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26E81F77-0BAD-44D6-BB4C-3E5F226B9996}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26E81F77-0BAD-44D6-BB4C-3E5F226B9996}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26E81F77-0BAD-44D6-BB4C-3E5F226B9996}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
