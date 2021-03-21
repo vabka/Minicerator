@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Minicerator.CLI;
 using Minicerator.Protocol.Packets;
 
 var serializer = new PacketSerializer();
@@ -83,28 +84,4 @@ static ReadOnlyMemory<byte> PrepareBuffer<T>(PacketSerializer packetSerializer, 
     var buffer = new Memory<byte>(new byte[size.BufferSize]);
     packetSerializer.Serialize(buffer.Span, packetBody, size.BodySize);
     return buffer;
-}
-
-class ServerStatus
-{
-    [JsonPropertyName("description")] public ServerDescription Description { get; init; }
-    [JsonPropertyName("players")] public ServerPlayers Players { get; init; }
-    [JsonPropertyName("version")] public ServerVersion Version { get; init; }
-}
-
-class ServerVersion
-{
-    [JsonPropertyName("name")] public string Name { get; init; }
-    [JsonPropertyName("protocol")] public int Protocol { get; init; }
-}
-
-class ServerPlayers
-{
-    [JsonPropertyName("max")] public int Max { get; init; }
-    [JsonPropertyName("online")] public int Online { get; init; }
-}
-
-class ServerDescription
-{
-    [JsonPropertyName("text")] public string Text { get; init; }
 }

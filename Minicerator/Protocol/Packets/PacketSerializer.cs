@@ -102,36 +102,8 @@ namespace Minicerator.Protocol.Packets
             return stringSizeSize + byteCount;
         }
 
-        private static int GetVarIntSize(int value)
-        {
-            var val = (uint) value;
-            var count = 0;
-            do
-            {
-                val >>= 7;
-                count++;
-            } while (val != 0);
+        private static int GetVarIntSize(int value) => VarInt.GetSize(value);
 
-            return count;
-        }
-
-        private static int WriteVarInt(Span<byte> slice, int value)
-        {
-            var val = (uint) value;
-            var written = 0;
-            do
-            {
-                var temp = (byte) (val & 0b01111111);
-                val >>= 7;
-                if (val != 0)
-                {
-                    temp |= 0b10000000;
-                }
-
-                slice[written++] = temp;
-            } while (val != 0);
-
-            return written;
-        }
+        private static int WriteVarInt(Span<byte> slice, int value) => VarInt.Write(slice, value);
     }
 }
