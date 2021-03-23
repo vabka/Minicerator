@@ -19,7 +19,7 @@ namespace Minicerator.Protocol
                 var meanBits = nextByte & 0b0111_1111;
                 value |= meanBits << shift;
 
-                var highBit = nextByte & ~0b1000_0000;
+                var highBit = nextByte & 0b1000_0000;
                 var noMoreBytes = highBit == 0;
                 if (noMoreBytes)
                     return true;
@@ -78,7 +78,7 @@ namespace Minicerator.Protocol
                 long meanBits = nextByte & 0b0111_1111;
                 value |= meanBits << shift;
 
-                var highBit = nextByte & ~0b1000_0000;
+                var highBit = nextByte & 0b1000_0000;
                 var noMoreBytes = highBit == 0;
                 if (noMoreBytes)
                     return true;
@@ -106,11 +106,11 @@ namespace Minicerator.Protocol
             var written = 0;
             do
             {
-                var temp = (byte) (val & 0b01111111);
+                var temp = (byte) (val & 0b0111_1111);
                 val >>= 7;
                 if (val != 0)
                 {
-                    temp |= 0b10000000;
+                    temp |= 0b1000_0000;
                 }
 
                 slice[written++] = temp;

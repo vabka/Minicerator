@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using Minicerator.CLI;
+using Minicerator.Protocol;
 using Minicerator.Protocol.Packets;
 
 var serializer = new PacketSerializer();
@@ -15,64 +18,53 @@ var handshake = new Handshake
     ServerPort = 25565,
     NextState = Handshake.State.Status
 };
+var channel = Channel.CreateUnbounded<RawPacket>();
+var reader = new Reader(channel.Writer, socket);
+var cts = new CancellationTokenSource();
+var task = reader.StartReading(cts.Token);
 await socket.SendAsync(PrepareBuffer(serializer, handshake), SocketFlags.None);
-await socket.SendAsync(PrepareBuffer(serializer, new QueryStatus()), SocketFlags.None);
-var buf = new Memory<byte>(new byte[256]);
-var readBytes = await socket.ReceiveAsync(buf, SocketFlags.None);
+var poller = Task.Run(async () =>
 {
-    var scope = buf[..readBytes];
-    if (TryReadVarInt(scope.Span, out var packetLength, out var packetLengthLength))
+    while (true)
     {
-        var totalLength = packetLength + packetLengthLength;
-        if (scope.Length >= totalLength)
+        cts.Token.ThrowIfCancellationRequested();
+        await socket.SendAsync(PrepareBuffer(serializer, new QueryStatus()), SocketFlags.None, cts.Token);
+        await Task.Delay(1000);
+    }
+}, cts.Token);
+await foreach (var packet in channel.Reader.ReadAllAsync())
+{
+    if (packet.Id == 0x00)
+    {
+        var scope = packet.Content;
+        if (VarInt.TryRead(scope.Span, out var jsonLength, out var jsonLengthLength))
         {
-            scope = scope.Slice(packetLengthLength, packetLength);
-            if (TryReadVarInt(scope.Span, out var packetId, out var packetIdLength))
+            scope = scope[jsonLengthLength..];
+            if (scope.Length != jsonLength)
+                throw new InvalidOperationException("Invalid json length");
+            var status = JsonSerializer.Deserialize<ServerStatus>(scope.Span);
+            if (status != null)
             {
-                scope = scope[packetIdLength..];
-                if (packetId == 0x00)
-                {
-                    if (TryReadVarInt(scope.Span, out var jsonLength, out var jsonLengthLength))
-                    {
-                        scope = scope[jsonLengthLength..];
-                        if (scope.Length != jsonLength)
-                            throw new InvalidOperationException("Invalid json length");
-                        var status = JsonSerializer.Deserialize<ServerStatus>(scope.Span);
-                        if (status != null)
-                        {
-                            Console.WriteLine($"Server: {status.Description.Text}");
-                            Console.WriteLine($"Version: {status.Version.Name} ({status.Version.Protocol})");
-                            Console.WriteLine($"Players: {status.Players.Online}/{status.Players.Max}");
-                        }
-                    }
-                }
+                Console.WriteLine($"Server: {status.Description.Text}");
+                Console.WriteLine($"Version: {status.Version.Name} ({status.Version.Protocol})");
+                Console.WriteLine($"Players: {status.Players.Online}/{status.Players.Max}");
             }
         }
     }
 }
 
-static bool TryReadVarInt(ReadOnlySpan<byte> slice, out int value, out int readBytes)
+cts.Cancel();
+try
 {
-    readBytes = 0;
-    value = 0;
-    var shift = 0;
-    while (true)
-    {
-        if (readBytes >= slice.Length)
-            return false;
-
-        var nextByte = slice[readBytes++];
-
-        var meanBits = nextByte & 0b0111_1111;
-        value |= meanBits << shift;
-
-        var highBit = nextByte & ~0b1000_0000;
-        var noMoreBytes = highBit == 0;
-        if (noMoreBytes)
-            return true;
-
-        shift += 7;
-    }
+    await Task.WhenAll(task, poller);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Exited");
+}
+catch (Exception e)
+{
+    Console.WriteLine(e);
 }
 
 static ReadOnlyMemory<byte> PrepareBuffer<T>(PacketSerializer packetSerializer, T packetBody) where T : IPacket
